@@ -1,0 +1,7 @@
+/config.py
+past_analytics/
+__pycache__/
+/chromedriver
+/geckodriver
+/geckodriver.log
+/error.html
