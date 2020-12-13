@@ -9,4 +9,4 @@ def send(req_headers,req_body,filename):
     print(res.json)
 
     #Moves file to past analytics to prevent clutter
-    os.rename('./'+filename, './past_analytics/'+filename)
+    os.rename(os.path.abspath(os.getcwd())+"/"+filename, os.path.abspath(os.getcwd())+"/past_analytics/"+filename)

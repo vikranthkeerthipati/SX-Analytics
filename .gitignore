@@ -5,3 +5,6 @@ __pycache__/
 /geckodriver
 /geckodriver.log
 /error.html
+/currentData.json
+/cumulative.json
+/test.py
