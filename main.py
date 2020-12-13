@@ -18,6 +18,5 @@ try:
     scrape.scrape(browser)
     #analyzing and sending to slack
     analyze.analyze()
-    browser.quit()
-except:
+finally:
     browser.quit()

@@ -34,12 +34,14 @@ def analyze():
             print("analytics updated!")
         else:
             print("today's value already added!")
-
+        f.close()
     #Getting last and 2nd to last entry with associated data
-
+    
     formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%B %dth, %Y")
-    datajson = open(os.path.abspath(os.getcwd())+"currentData.json","r+")
+    datajson = open(os.path.abspath(os.getcwd())+"/currentData.json","w")
+    datajson = open(os.path.abspath(os.getcwd())+"/currentData.json","r+")
     empty = (datajson.read() == "")
+    print("reached here")
     if empty:
         print("running...")
         data = {"":""}

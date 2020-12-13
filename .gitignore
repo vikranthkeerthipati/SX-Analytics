@@ -8,3 +8,4 @@ __pycache__/
 /currentData.json
 /cumulative.json
 /test.py
+*.csv
