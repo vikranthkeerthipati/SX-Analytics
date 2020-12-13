@@ -11,7 +11,7 @@ def analyze():
     #Locating the saved file and reading it through PANDAS
     result = []
     while(result == []):
-        path = "./"
+        path = os.path.abspath(os.getcwd())
         os.chdir(path)
         result = glob.glob('*.{}'.format("csv"))
         print(result)
