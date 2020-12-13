@@ -38,7 +38,7 @@ def analyze():
     #Getting last and 2nd to last entry with associated data
 
     formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%B %dth, %Y")
-    datajson = open("currentData.json","r+")
+    datajson = open(os.path.abspath(os.getcwd())+"currentData.json","r+")
     empty = (datajson.read() == "")
     if empty:
         print("running...")
