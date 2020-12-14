@@ -9,3 +9,4 @@ __pycache__/
 /cumulative.json
 /test.py
 *.csv
+*.env
