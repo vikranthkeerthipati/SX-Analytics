@@ -1,8 +1,21 @@
 import config
 from flask import Flask, request
 import json
-app = Flask(__name__)
+from apscheduler.scheduler import Scheduler
+from datetime import datetime
+import main
 
+app = Flask(__name__)
+scheduler = Scheduler({'ap.scheduler.timezone':'America/New_York'})
+scheduler.start()
+
+def daily_update():
+    try:
+        main.main()
+        print("success")
+    except:
+        print("failed")
+scheduler.add_interval_job(daily_update, hours = 24, start_date='2020-12-14 9:01')
 @app.route("/")
 def home():
     return "Hello World!"
