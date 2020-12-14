@@ -5,10 +5,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException
 import time
-import config
+import os
 
 
 def scrape(browser):
+
+    #Slack analytics link
     browser.get("https://sx-members.slack.com/stats#overview")
 
     #Waiting until page has loaded and entering username and password
@@ -22,9 +24,9 @@ def scrape(browser):
     email_field = browser.find_element_by_id("email")
     print("login page opened")
     time.sleep(0.5)
-    email_field.send_keys(config.username)
+    email_field.send_keys(os.getenv("username"))
     pass_field = browser.find_element_by_id("password")
-    pass_field.send_keys(config.password)
+    pass_field.send_keys(os.getenv("password"))
     time.sleep(0.5)
 
     #Submitting credentials
