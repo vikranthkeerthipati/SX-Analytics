@@ -3,21 +3,22 @@ import glob
 import json
 import csv
 import os
-
 from pandas.core.frame import DataFrame
 # import matplotlib.pyplot as plt
 import plotly.express as px
 import numpy as np
 
-def analyze():
-    path = os.getcwd()
-    channel_path = path+"/community-messages/"
-    names = []
+path = os.getcwd()
+channel_path = path+"/community-messages/"
 
-    for f in os.scandir(channel_path):
-        print(f)
-        if f.is_dir():   
-            names.append(f.name)
+names = []
+for f in os.scandir(channel_path):
+    print(f)
+    if f.is_dir():   
+        names.append(f.name)
+big_data = pd.DataFrame()
+def analyze():
+
     exec_total_df = pd.DataFrame(columns=["Names","Messages","Channel","Status"])
     member_total_df = pd.DataFrame(columns=["Names","Messages","Channel","Status"])
     for dirName in names:
@@ -34,7 +35,7 @@ def analyze():
                     data.append(jdata)
 
         df = pd.DataFrame(data)
-
+        print(df)
         members_counter = 0
         execs_counter = 0
 
@@ -65,3 +66,24 @@ def analyze():
     member_total_df.sort_values(["Channel","Messages"],ascending=[True,False],inplace=True,ignore_index=True)
     member_total_df.to_csv("member.csv",index=False)
 
+def raw_analyze():
+    big_data = pd.DataFrame()
+    # exec_raw_df = pd.DataFrame(columns=["Date", "Time", "User", "Content", "Content-Type", "Channel", "Status", "Email"])
+    # member_raw_df = pd.DataFrame(columns=["Date", "Time", "User", "Content", "Content-Type", "Channel", "Status", "Email"])
+    user_list = json.load(open(channel_path+"/users.json", "r"))
+    for dirName in names:
+        files_list = []
+        files_list = glob.glob(channel_path + dirName + "/*.json")
+        data = pd.DataFrame()
+        execs_roster = set(open(path+"/execs_roster.txt").read().split("\n"))
+        execs = {}
+        members = {}
+        for v in files_list:
+            with open(v,'r') as d:
+                jdata = json.load(d)
+                data = data.append(pd.read_json(v),ignore_index=True)
+
+        data["Channel"] = dirName
+        big_data = big_data.append(data, ignore_index=True)
+    return big_data
+    # big_data.to_csv("testing.csv")
