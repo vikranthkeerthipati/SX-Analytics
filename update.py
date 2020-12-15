@@ -33,5 +33,5 @@ def handle():
         req_body = parse.createBody(datajson["date"],datajson["members"],datajson["active-members"],datajson["daily-posters"],datajson["messages_posted"])
         return req_body
         
-app.run(host="0.0.0.0",debug=True)
+app.run(debug=True)
 

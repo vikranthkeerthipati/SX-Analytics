@@ -20,3 +20,4 @@ def main():
         analyze.analyze()
     finally:
         browser.quit()
+
