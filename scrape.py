@@ -6,7 +6,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException
 import time
 import os
+from dotenv import load_dotenv
 
+env_path = os.path.abspath(os.getcwd())
+load_dotenv(env_path+"/.env")
 
 def scrape(browser):
 

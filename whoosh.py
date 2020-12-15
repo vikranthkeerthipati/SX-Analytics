@@ -1,6 +1,10 @@
 import requests 
 import json
 import os
+from dotenv import load_dotenv
+
+env_path = os.path.abspath(os.getcwd())
+load_dotenv(env_path+"/.env")
 
 def send(req_headers,req_body,filename):
     #Posts it through webhook
