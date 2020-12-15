@@ -1,0 +1,7 @@
+__pycache__/
+community-messages/
+/*.txt
+!requirements.txt
+/*.csv
+/*.xlsx
+/old_analyze_channels.py
