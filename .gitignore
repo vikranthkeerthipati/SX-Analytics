@@ -5,3 +5,5 @@ community-messages/
 /*.csv
 /*.xlsx
 /old_analyze_channels.py
+*.env
+!template.env

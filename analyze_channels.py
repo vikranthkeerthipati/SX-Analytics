@@ -18,8 +18,8 @@ def analyze():
         print(f)
         if f.is_dir():   
             names.append(f.name)
-    exec_total_df = pd.DataFrame(columns=["Names","Messages","Channel"])
-    member_total_df = pd.DataFrame(columns=["Names","Messages","Channel"])
+    exec_total_df = pd.DataFrame(columns=["Names","Messages","Channel","Status"])
+    member_total_df = pd.DataFrame(columns=["Names","Messages","Channel","Status"])
     for dirName in names:
         files_list = []
         files_list = glob.glob(channel_path + dirName + "/*.json")
@@ -45,7 +45,7 @@ def analyze():
                     if(not name in execs_roster):
                         new_message = member_total_df[member_total_df["Names"] == name][member_total_df["Channel"] == dirName]
                         if new_message.index.values.size == 0:
-                            member = [{"Names": name,"Messages":1,"Channel": dirName}]
+                            member = [{"Names": name,"Messages":1,"Channel": dirName,"Status":"Member"}]
                             member_total_df = pd.concat([member_total_df,pd.DataFrame(member)],ignore_index=True)
                         else:
                             index = member_total_df[member_total_df["Names"] == name][member_total_df["Channel"] == dirName].index.values[0]
@@ -54,7 +54,7 @@ def analyze():
                     else:
                         new_message = exec_total_df[exec_total_df["Names"] == name][exec_total_df["Channel"] == dirName]
                         if new_message.index.values.size == 0:
-                            exec = [{"Names": name,"Messages":1,"Channel": dirName}]
+                            exec = [{"Names": name,"Messages":1,"Channel": dirName,"Status":"Exec"}]
                             exec_total_df = pd.concat([exec_total_df,pd.DataFrame(exec)],ignore_index=True)
                         else:
                             index = exec_total_df[exec_total_df["Names"] == name][exec_total_df["Channel"] == dirName].index.values[0]
