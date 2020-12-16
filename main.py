@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
 from sqlalchemy import types
+from threading import Thread
 
 env_path = os.path.abspath(os.getcwd())
 load_dotenv(env_path+"/.env")
@@ -19,8 +20,28 @@ def analyze_raw():
     engine = create_engine(database_url,poolclass=NullPool)
     conn = engine.connect()
     df = analyze_channels.raw_analyze()
-    #UNCOMMENT BELOW IF YOU WANT TO WRITE TO HEROKU DB(NOTE: ALL EXISTING DATA WILL BE LOST SO BE CAREFUL!)
-    # df.to_sql("raw-data",conn,if_exists="replace",index=False,dtype=types.JSON())
+    df.drop(columns=["team","user_team","source_team","subscribed","display_as_bot","bot_profile","username","old_name","name","purpose","topic","hidden","inviter","upload"],inplace=True)
+    print(df["reply_count"])
+    # UNCOMMENT BELOW IF YOU WANT TO WRITE TO HEROKU DB(NOTE: ALL EXISTING DATA WILL BE LOST SO BE CAREFUL!)
+    print("writing to heroku db...")
+
+    writing_thread = Thread(target = df.to_sql("raw-data",conn,if_exists="replace",index=False,dtype=types.JSON()))
+    writing_thread.start()
+    while writing_thread.is_alive():
+        print(".")
+    conn.close()
+
+def analyze_med():
+    database_url =  os.getenv("DATABASE_URL_RAW")
+    engine = create_engine(database_url,poolclass=NullPool)
+    conn = engine.connect()
+    df = analyze_channels.med_analyze()
+    # UNCOMMENT BELOW IF YOU WANT TO WRITE TO HEROKU DB(NOTE: ALL EXISTING DATA WILL BE LOST SO BE CAREFUL!)
+    print("writing to heroku db...")
+    writing_thread = Thread(target = df.to_sql("med-data",conn,if_exists="replace",index=False))
+    writing_thread.start()
+    while writing_thread.is_alive():
+        print(".")
     conn.close()
 
 #This relies on clean up done by analyze_channels and only contains Name, Messages, Channel, Status
@@ -117,4 +138,4 @@ def analyze_simple():
 # fig_member = px.bar(member_total_df, x="Names", y="Messages",color="Channel")
 # fig_member.update_layout(xaxis={"categoryorder":"total descending"})
 # fig_member.show()
-analyze_raw()
+analyze_med()
