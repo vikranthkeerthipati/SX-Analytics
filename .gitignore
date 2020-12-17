@@ -1,13 +1,3 @@
-/config.py
-past_analytics/
-__pycache__/
-/chromedriver
-/geckodriver
-/geckodriver.log
-/error.html
-/currentData.json
-/cumulative.json
-/test.py
-*.csv
-*.env
-!template.env
+.env
+.vscode/
+venv/
