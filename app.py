@@ -12,13 +12,13 @@ slack = Slack({
 })
 
 
-eventbrite = Eventbrite({
-    'api_key': os.environ.get('EVENTBRITE_API_KEY')
-})
+# eventbrite = Eventbrite({
+#     'api_key': os.environ.get('EVENTBRITE_API_KEY')
+# })
 
-print(eventbrite.request('/categories'))
+# print(eventbrite.request('/categories'))
 
 # slack.fetch_channels()
 # slack.fetch_channels_history()
 
-print(slack.fetch_users())
+slack.fetch_channels()
