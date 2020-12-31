@@ -6,7 +6,7 @@ class Attachment(Base):
     __tablename__ = "attachments"
     id = Column(Integer, primary_key=True)
     title = Column(String)
-    ts = Column(Integer)
+    ts = Column(String)
     author_id = Column(String)
     author_subname = Column(String)
     author_name = Column(String)
