@@ -34,7 +34,11 @@ class Channel(Base):
     purpose = relationship("Purpose", uselist=False, back_populates="channel")
     previous_names = relationship("PreviousName", uselist=True, back_populates="channel")
     num_members = Column(Integer)
-
+    creator = Column(String)
+    last_read = Column(String)
+    is_open = Column(String)
+    priority = Column(String)
+    
 class SharedTeamId(Base):
     __tablename__ = "shared_team_ids"
     id = Column(Integer, primary_key = True)

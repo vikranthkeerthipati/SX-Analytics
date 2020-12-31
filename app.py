@@ -8,7 +8,8 @@ load_dotenv()
 
 slack = Slack({
     'api_key': os.environ.get("SLACK_USER_TOKEN"),
-    'secret_key': os.environ.get("SLACK_SIGNING_SECRET")
+    'secret_key': os.environ.get("SLACK_SIGNING_SECRET"),
+    'database_url': os.environ.get("DATABASE_URL")
 })
 
 
@@ -20,5 +21,6 @@ slack = Slack({
 
 # slack.fetch_channels()
 # slack.fetch_channels_history()
-
+# slack.fetch_users()
 slack.fetch_channels()
+slack.fetch_channels_history()
