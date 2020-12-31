@@ -19,8 +19,7 @@ slack = Slack({
 
 # print(eventbrite.request('/categories'))
 
-# slack.fetch_channels()
-# slack.fetch_channels_history()
-# slack.fetch_users()
+
+slack.fetch_users()
 slack.fetch_channels()
 slack.fetch_channels_history()
