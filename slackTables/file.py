@@ -73,3 +73,5 @@ class File(Base):
     preview_is_truncated = Column(String)
     message_id = Column(Integer, ForeignKey("messages.id"))
     message = relationship("Message", back_populates="files")
+    attachment_id = Column(Integer, ForeignKey("attachments.id"))
+    attachments = relationship("Attachment", back_populates="files")

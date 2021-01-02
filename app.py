@@ -7,9 +7,10 @@ from slack import Slack
 load_dotenv()
 
 slack = Slack({
-    'api_key': os.environ.get("SLACK_USER_TOKEN"),
+    'user_token': os.environ.get("SLACK_USER_TOKEN"),
     'secret_key': os.environ.get("SLACK_SIGNING_SECRET"),
-    'database_url': os.environ.get("DATABASE_URL")
+    'database_url': os.environ.get("DATABASE_URL"),
+    'bot_token': os.environ.get("SLACK_BOT_TOKEN")
 })
 
 

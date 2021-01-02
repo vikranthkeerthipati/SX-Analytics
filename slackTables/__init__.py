@@ -6,7 +6,7 @@ from slackTables.slackuser import SlackUser
 from slackTables.topic import Topic
 from slackTables.channelhistory import ChannelHistory
 from slackTables.message import Message, ReplyUser, PinnedInfo, Edit
-from slackTables.block import Block, Element, Subelement, Text, AttachmentBlock, Call, AppIcon, BotIcon, MessageIcon, BotProfile, UserProfile, Style
+from slackTables.block import Block, Element, Subelement, Text, AttachmentBlock, Call, AppIcon, BotIcon, MessageIcon, BotProfile, UserProfile, Style, Accessory
 from slackTables.reaction import Reaction, ReactionUser
 from slackTables.file import File
-from slackTables.attachment import Attachment
+from slackTables.attachment import Attachment, Field, Action

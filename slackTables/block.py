@@ -9,9 +9,19 @@ class Block(Base):
     block_id = Column(String)
     text = relationship("Text", uselist=True,back_populates="block")
     elements = relationship("Element", uselist=True, back_populates="block")
-    accessory = Column(String)
+    accessory = relationship("Accessory", uselist=False, back_populates="block")
     message_id = Column(Integer, ForeignKey("messages.id"))
     message = relationship("Message",back_populates="blocks")
+
+class Accessory(Base):
+    __tablename__ = "accessories"
+    id = Column(Integer, primary_key=True)
+    _type = Column(String)
+    image_url = Column(String)
+    alt_text = Column(String)
+    action_id = Column(String)
+    block_id = Column(Integer, ForeignKey("blocks.id"))
+    block = relationship("Block", back_populates="accessory")
 
 class AttachmentBlock(Block):
     __tablename__ = "attachment_blocks"
@@ -21,6 +31,7 @@ class AttachmentBlock(Block):
     call_id = Column(String)
     call = relationship("Call", uselist=False, back_populates="attachment_block")
     block_id = Column(String)
+    url = Column(String)
     api_decoration_available = Column(Boolean)
     attachment_id = Column(Integer, ForeignKey("attachments.id"))
     attachment = relationship("Attachment", back_populates="blocks")
@@ -94,7 +105,13 @@ class Element(Base):
     text = relationship("Text", uselist=False, back_populates="element")
     action_id = Column(String)
     url = Column(String)
+    image_url = Column(String)
+    image_width = Column(Integer)
+    image_height = Column(Integer)
+    image_bytes = Column(Integer)
+    alt_text = Column(String)
     value = Column(String)
+    # style = relationship("Style", uselist=False, back_populates="element")
     style = Column(String)
     indent = Column(Integer)
     verbatim = Column(Boolean)
@@ -126,8 +143,12 @@ class Style(Base):
     italic = Column(Boolean)
     code  = Column(Boolean)
     strike = Column(Boolean)
+    # element_id = Column(Integer, ForeignKey("elements.id"))
+    # element = relationship("Element", back_populates="style")
     subelement_id = Column(Integer, ForeignKey("subelements.id"))
     subelement = relationship("Subelement", back_populates="style")
+    # action_id = Column(Integer, ForeignKey("actions.id"))
+    # action = relationship("Action", back_populates="style")
 
 class Text(Base):
     __tablename__ = "texts"
@@ -142,6 +163,9 @@ class Text(Base):
     element = relationship("Element", back_populates="text")
     subelement_id = Column(Integer, ForeignKey("subelements.id"))
     subelement = relationship("Subelement", back_populates="text")
+    action_id = Column(Integer, ForeignKey("actions.id"))
+    action = relationship("Action",back_populates="text")
+    
 
 
 class BotProfile(Base):

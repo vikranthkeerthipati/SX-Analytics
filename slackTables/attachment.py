@@ -1,6 +1,7 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
 from slackTables.base import Base
+from slackTables.block import Text
 
 class Attachment(Base):
     __tablename__ = "attachments"
@@ -44,7 +45,31 @@ class Attachment(Base):
     video_html = Column(String)
     video_html_width = Column(Integer)
     video_html_height = Column(Integer)
-    fields = Column(String)
+    actions = relationship("Action", uselist=True, back_populates="attachments")
+    callback_id = Column(String)
+    fields = relationship("Field", uselist=True, back_populates="attachments")
     pretext = Column(String)
+    files = relationship("File",uselist=True, back_populates="attachments")
     message_id = Column(Integer, ForeignKey("messages.id"))
     message = relationship("Message", back_populates="attachments")
+
+class Field(Text):
+    __tablename__ = "fields"
+    __mapper_args__ = {'concrete':True}
+    id = Column(Integer, primary_key = True)
+    attachment_id = Column(Integer, ForeignKey("attachments.id"))
+    attachments = relationship("Attachment", back_populates="fields")
+    
+class Action(Base):
+    __tablename__ = "actions"
+    id = Column(Integer, primary_key=True)
+    action_id = Column(String)
+    name = Column(String)
+    text = relationship("Text", uselist = False, back_populates="action")
+    _type = Column(String)
+    value = Column(String)
+    url = Column(String)
+    # style = relationship("Style", uselist = False, back_populates="action")
+    style = Column(String)
+    attachment_id = Column(Integer, ForeignKey("attachments.id"))
+    attachments = relationship("Attachment", back_populates="actions")

@@ -6,20 +6,29 @@ from logging import Logger
 from sqlalchemy import create_engine, Column, Integer, String, Table,Boolean, ForeignKey
 from sqlalchemy import MetaData
 from sqlalchemy.pool import StaticPool
+from sqlalchemy.exc import SQLAlchemyError
 import json
 from sqlalchemy.orm import sessionmaker, scoped_session
 import os
+import time
+from datetime import datetime
+import concurrent.futures
 from slackTables import *
 
 class Slack:
     def __init__(self, config):
         self.api_url = "https://slack.com/api"
-        self.api_key = config['api_key']
+        self.user_token = config['user_token']
+        self.bot_token = config['bot_token']
         self.secret_key = config["secret_key"]
         self.database_url = config["database_url"]
-        self.client = WebClient(token=self.api_key)
-        self.engine = create_engine(self.database_url,echo=True)
-        # self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        self.client = WebClient(token=self.user_token)
+        self.bot_client = WebClient(token=self.bot_token)
+        #Testing replies api   
+        self.replies = 0
+        #UNCOMMENT IF YOU WISH TO WRITE TO DB
+        # self.engine = create_engine(self.database_url,echo=True)
+        self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
         Session = scoped_session(sessionmaker(bind=self.engine))
         self.session = Session()
         Base.metadata.bind = self.engine
@@ -33,10 +42,8 @@ class Slack:
             for slack_channel in channels:
                 if "topic" in slack_channel:
                     channel_topic = slack_channel["topic"]
-                    channel_topic["creator_id"] = channel_topic.pop("creator")
-                    topic = Topic(**channel_topic)
-                    slack_channel["topic"] = topic
-                
+                    slack_channel["topic"] = self.create_topic(channel_topic)
+ 
                 if "purpose" in slack_channel:
                     channel_purpose = slack_channel["purpose"]
                     channel_purpose["creator_id"] = channel_purpose.pop("creator")
@@ -79,36 +86,64 @@ class Slack:
             Base.metadata.create_all(self.engine)
             self.session.commit()
         except SlackApiError as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Slack API error: " + e))
             logger.error("Error fetching conversations: {}".format(e))
+            raise
+        except SQLAlchemyError as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Database write error: " + e))
+            logger.error("Error writing database: {}".format(e))
+            raise
+        except Exception as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Unknown error: " + e))
+            logger.error("Error writing database: {}".format(e))
+            raise
+
+
+
+
     
     def fetch_channels_history(self):
         logger = Logger("history")
         
         try:
-            #TODO: Modify to work with SQL Tables
             channels = self.session.query(Channel).all()
             channel_history_list = []
             for slack_channel in channels:
+                self.replies = 0
                 id = slack_channel.channel_id
                 name = slack_channel.name
                 print("0000000000")
                 print(name + "\n" + id)
                 print("0000000000")
-                result = self.client.conversations_history(channel=id,limit=10000)["messages"]
-                # f= open(id+".json","w")
-                # json.dump(result, f)
+                result = self.client.conversations_history(channel=id,limit=200)
+                cursor = result["response_metadata"]["next_cursor"] if result["response_metadata"] != None else ""
+                print(cursor)
+                slack_messages = result["messages"]
+                while(len(cursor) > 0):
+                    cursor = result["response_metadata"]["next_cursor"] if result["response_metadata"] != None else ""
+                    print(cursor)
+                    result = self.client.conversations_history(channel=id, limit = 200, cursor = cursor)
+                    slack_messages += result["messages"]
+                print("reached")
+                f= open(id+".json","w")
+                json.dump(slack_messages, f)
                 messages = []
-                for slack_message in result:
-                    slack_message["_type"] = slack_message.pop("type")
-                    if "user" in slack_message:
-                        slack_message["user_id"] = slack_message.pop("user")
+                root_ids = set()
+                for slack_message in slack_messages:
+                    # print(".", end="",flush=True)
+
+                    slack_message["_type"] = slack_message.pop("type","") 
+                    slack_message["user_id"] = slack_message.pop("user","")
 
                     if "blocks" in slack_message:
                         blocks = []
                         for slack_block in slack_message["blocks"]:
-                            slack_block["_type"] = slack_block.pop("type")
+                            slack_block["_type"] = slack_block.pop("type","")
+
+                            #Checking elements
                             if "elements" in slack_block:
                                 elements = []
+                                #Iterating through each element
                                 for slack_element in slack_block["elements"]:
                                     slack_element["_type"] = slack_element.pop("type")
                                     if "elements" in slack_element:
@@ -122,43 +157,56 @@ class Slack:
                                                     slack_subelement["text"] = Text(**slack_subelement["text"])
                                                 else:
                                                     slack_subelement["text"] = Text(text=slack_subelement["text"])
-                                                #0000
-                                                slack_subelement.pop("text")
 
-                                            if "elements" in slack_subelement:
-                                                #TODO: Deal with elements within subelements
-                                                slack_subelement.pop("elements")
+                                            #TODO: Deal with elements within subelements
+                                            slack_subelement.pop("elements","")
                                             if "style" in slack_subelement:
                                                 slack_subelement["style"] = Style(**slack_subelement["style"])
                                             subelement = Subelement(**slack_subelement)
                                             subelements.append(subelement)
                                         slack_element["subelements"] = subelements
                                     if "text" in slack_element:
-                                        #0000
-                                        slack_element.pop("text")
-                                        # if type(slack_subelement["text"]) is dict:
-                                        #     slack_element["text"]["_type"] = slack_element["text"].pop("type")
-                                        #     slack_element["text"] = Text(**slack_element["text"])
-                                        # else:
-                                        #     slack_element["text"] = Text(text=slack_subelement["text"])
+                                        if type(slack_element["text"]) is dict:
+                                            slack_element["text"]["_type"] = slack_element["text"].pop("type")
+                                            slack_element["text"] = Text(**slack_element["text"])
+                                        else:
+                                            slack_element["text"] = Text(text=slack_element["text"])
+
+                                    #TODO: Include in schema
+                                    slack_element.pop("confirm","")
+                                    #TODO: Include in schema
+                                    slack_element.pop("fallback","")
+
+                                    # if "style" in slack_element:
+                                    #     if type(slack_element["style"]) is dict:
+                                    #         print(slack_element["style"])
+                                    #         slack_element["style"] = Style(slack_element["style"])
+                                    #     else:
+                                    #         print(slack_element["style"])
                                     element = Element(**slack_element)
                                     elements.append(element)
                                 slack_block["elements"] = elements
                             if "text" in slack_block:
                                 text = slack_block["text"]
-                                text["_type"] = text.pop("type")
+                                text["_type"] = text.pop("type","")
                                 slack_block["text"] = [Text(**text)]
-                                #00000
-                                slack_block.pop("text")
+
                             if "fields" in slack_block:
                                 fields = []
                                 for slack_field in slack_block.pop("fields"):
-                                    slack_field["_type"] = slack_field.pop("type")
+                                    slack_field["_type"] = slack_field.pop("type","")
                                     field = Text(**slack_field)
                                     fields.append(field)
                                 slack_block["text"] = fields
                                 #000
                                 slack_block.pop("text")
+                            
+                            if "accessory" in slack_block:
+                                slack_block["accessory"]["_type"] = slack_block["accessory"].pop("type","")
+                                #TODO: Adjust for options
+                                slack_block["accessory"].pop("options","")
+                                slack_block["accessory"] = Accessory(**slack_block["accessory"])
+
                             block = Block(**slack_block)
                             blocks.append(block)
                         slack_message["blocks"] = blocks
@@ -166,7 +214,7 @@ class Slack:
                     if "reactions" in slack_message:
                         reactions = []
                         for slack_reaction in slack_message["reactions"]:
-                            slack_reaction["reaction_users"] = slack_reaction.pop("users")
+                            slack_reaction["reaction_users"] = slack_reaction.pop("users","")
                             reaction_users = []
                             for slack_user in slack_reaction["reaction_users"]:
                                 reaction_user = ReactionUser(user_id = slack_user)
@@ -209,9 +257,16 @@ class Slack:
                                     slack_block["_type"] = slack_block.pop("type")
                                     if "call" in slack_block:
                                         slack_call = slack_block["call"]["v1"]
-                                        slack_call["media_backend_type"] = slack_block["call"].pop("media_backend_type")
+                                        slack_call["media_backend_type"] = slack_block["call"].pop("media_backend_type") if "media_backend_type" in slack_call else ""
+                                        slack_call["call_id"] = slack_call.pop("id")
                                         if "app_icon_urls" in slack_call:
                                             slack_call["app_icon_urls"] = AppIcon(**slack_call["app_icon_urls"])
+                                        #000000
+                                        join = ","
+                                        slack_call["active_participants"] = join.join(slack_call["active_participants"])
+                                        slack_call["all_participants"] = join.join(slack_call["all_participants"])
+                                        slack_call["channels"] = slack_call["channels"][0]
+                                        #000000
                                         call = Call(**slack_call)
                                         slack_block["call"] = call
                                     if "text" in slack_block:
@@ -223,7 +278,38 @@ class Slack:
                                 slack_attachment["blocks"] = blocks
                             #000000
                             if "fields" in slack_attachment:
-                                slack_attachment.pop("fields")
+                                fields = []
+                                for slack_field in slack_attachment["fields"]:
+                                    if "type" in slack_field:
+                                        slack_field["_type"] = slack_field.pop("type")
+                                        slack_field = Field(**slack_field)
+                                        fields.append(slack_field)
+                                slack_attachment["fields"] = fields
+                            if "actions" in slack_attachment:
+                                actions = []
+                                for slack_action in slack_attachment["actions"]:
+                                    slack_action["action_id"] = slack_action.pop("id")
+                                    slack_action["_type"] = slack_action.pop("type")
+                                    if(type(slack_action["text"]) is dict):
+                                        slack_action["text"] = Text(**slack_action["text"])
+                                    else:
+                                        slack_action["text"] = Text(text=slack_action["text"])
+                                    # print(slack_action["style"])
+                                    # slack_action["style"] = Style(**slack_action["style"])
+                                    action = Action(**slack_action)
+                                    actions.append(action)
+                                slack_attachment["actions"] = actions
+
+                            if "files" in slack_attachment:
+                                files = []
+                                for slack_file in slack_attachment["files"]:
+                                    if "id" in slack_file:
+                                        slack_file["file_id"] = slack_file.pop("id")
+                                    if "user" in slack_file:
+                                        slack_file["user_id"] = slack_file.pop("user")
+                                    _file = File(**slack_file)
+                                    files.append(_file)
+                                slack_attachment["files"] = files
                             attachment = Attachment(**slack_attachment)
                             attachments.append(attachment)
                         slack_message["attachments"] = attachments
@@ -242,7 +328,7 @@ class Slack:
                         slack_root = slack_message.pop("root")
                         if "client_msg_id" in slack_root:
                             slack_message["root_client_msg_id"] = slack_root["client_msg_id"]
-                            result.append(slack_root)
+                            slack_messages.append(slack_root)
                     
                     if "bot_profile" in slack_message:
                         slack_profile = slack_message["bot_profile"]
@@ -257,7 +343,30 @@ class Slack:
 
                     if "icons" in slack_message:
                         slack_message["icons"] = MessageIcon(**slack_message.pop("icons"))
+                    if "subtype" in slack_message and slack_message["subtype"] == "thread_broadcast":
+                        print("gtfo")
+                        slack_message.pop("thread_ts")
 
+
+                    if "thread_ts" in slack_message and not "reply" in slack_message:
+                        print("1111111")
+                        print(slack_message)
+                        thread_ts = slack_message.pop("thread_ts")
+                        message_id = ""
+                        if "client_msg_id" in slack_message:
+                            message_id = slack_message["client_msg_id"]
+                        else:
+                            message_id = thread_ts   
+                        if(not message_id in root_ids):
+                            root_ids.add(message_id)
+                            if not "root_client_msg_id" in slack_message:
+                                replied_messages = self.fetch_replies(id,thread_ts, message_id)
+                                print("run")
+                                slack_messages += replied_messages
+                            print("1111111")
+                            print("")
+                        else:
+                            slack_message = {}
                     message = Message(**slack_message)
                     messages.append(message)
                 channel = ChannelHistory(channel_id = name, messages = messages)
@@ -271,9 +380,20 @@ class Slack:
             # self.session.commit()
 
         except SlackApiError as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Slack API error: " + str(e)))
             logger.error("Error fetching conversations: {}".format(e))
+            raise
+        except SQLAlchemyError as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Database write error: " + str(e)))
+            logger.error("Error writing database: {}".format(e))
+            raise
+        except Exception as e:
+            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Unknown error: " + str(e)))
+            logger.error("Error writing database: {}".format(e))
+            raise
         
         print("the goddamn thing worked")
+        self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("the goddamn thing worked"))
         print(Base.metadata.tables.keys())
     def fetch_users(self):
         logger = Logger("users")
@@ -298,6 +418,42 @@ class Slack:
         except SlackApiError as e:
             logger.error("Error fetching conversations: {}".format(e))       
 
+    def fetch_replies(self, channel, thread_ts, client_msg_id):
+        self.replies += 1
+        # print("replies called: " + str(self.replies))
+        print(datetime.fromtimestamp(float(thread_ts)).strftime("%m/%d/%Y") + ": " + client_msg_id)
+        logger = Logger("replies")
+        for attempt in range(4):
+            try:
+                time.sleep(1.3)
+                messages = self.client.conversations_replies(channel=channel,ts=thread_ts)["messages"]
+                for message in messages:
+                    if("subtype" in message and message["subtype"] == "thread_broadcast"):
+                        print("hello")
+                        message = {}
+                        continue
+                        
+                    message["root_client_msg_id"] = client_msg_id
+                    message["reply"] = True
+                    message.pop("thread_ts")
+                return messages
+            except SlackApiError as e:
+                if(e.response["error"] == "ratelimited"):
+                    print("")
+                    print("cooldown",end="",flush=True)
+                    for i in range(60):
+                        print(".", end="",flush=True)
+                        time.sleep(0.5)
+                    print("")
+                    print("continuing!")
+                    print("")
+                    continue
+                else:
+                    logger.error("Error fetching conversations: {}".format(e))       
 
-
+    #Creation of SQLClasses            
+    def create_topic(self,channel_topic):
+            channel_topic["creator_id"] = channel_topic.pop("creator")
+            topic = Topic(**channel_topic)
+            return topic
 
