@@ -124,9 +124,9 @@ class Slack:
                     print(cursor)
                     result = self.client.conversations_history(channel=id, limit = 200, cursor = cursor)
                     slack_messages += result["messages"]
-                print("reached")
-                f= open(id+".json","w")
-                json.dump(slack_messages, f)
+                #Uncomment to see channel information
+                # f= open(id+".json","w")
+                # json.dump(slack_messages, f)
                 messages = []
                 root_ids = set()
                 for slack_message in slack_messages:
