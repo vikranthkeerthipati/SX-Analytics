@@ -27,8 +27,8 @@ class Slack:
         #Testing replies api   
         self.replies = 0
         #UNCOMMENT IF YOU WISH TO WRITE TO DB
-        # self.engine = create_engine(self.database_url,echo=True)
-        self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        self.engine = create_engine(self.database_url,echo=True)
+        # self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
         Session = scoped_session(sessionmaker(bind=self.engine))
         self.session = Session()
         Base.metadata.bind = self.engine
