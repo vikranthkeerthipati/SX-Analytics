@@ -38,7 +38,6 @@ class Message(Base):
     display_as_bot = Column(Boolean)
     # root = relationship("Root",uselist=False, back_populates="message")
     inviter = Column(String)
-    root_client_msg_id = Column(String)
     pinned_to = Column(String)
     x_files = Column(String)
     old_name = Column(String)
@@ -54,10 +53,14 @@ class Message(Base):
     bot_link = Column(String)
     parent_user_id = Column(String)
     upload_reply_to = Column(String)
-    reply = Column(Boolean)
+    replies = relationship("Reply", uselist=True, back_populates="message")
     icons = relationship("MessageIcon", uselist = False, back_populates="message")
     channel_history_id = Column(Integer, ForeignKey("channel_histories.id"))
     channel_history = relationship("ChannelHistory", back_populates="messages")
+    __mapper_args__ = {
+        'polymorphic_identity':'messages'
+        # 'polymorphic_on':user_id
+    }
 
 
 class Edit(Base):

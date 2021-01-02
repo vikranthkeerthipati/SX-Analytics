@@ -31,7 +31,6 @@ class AttachmentBlock(Block):
     call_id = Column(String)
     call = relationship("Call", uselist=False, back_populates="attachment_block")
     block_id = Column(String)
-    url = Column(String)
     api_decoration_available = Column(Boolean)
     attachment_id = Column(Integer, ForeignKey("attachments.id"))
     attachment = relationship("Attachment", back_populates="blocks")
