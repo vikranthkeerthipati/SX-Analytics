@@ -1,0 +1,75 @@
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from slackTables.base import Base
+from slackTables.block import Text
+
+class Attachment(Base):
+    __tablename__ = "attachments"
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    ts = Column(String)
+    author_id = Column(String)
+    author_subname = Column(String)
+    author_name = Column(String)
+    author_link = Column(String)
+    author_icon = Column(String)
+    mrkdwn_in = Column(String)
+    color = Column(String)
+    thumb_url = Column(String)
+    thumb_width = Column(Integer)
+    thumb_height = Column(Integer)
+    from_url = Column(String)
+    is_share = Column(Boolean)
+    footer = Column(String)
+    is_msg_unfurl = Column(Boolean)
+    channel_id = Column(String)
+    channel_name = Column(String)
+    title_link = Column(String)
+    fallback = Column(String)
+    text = Column(String)
+    blocks = relationship("AttachmentBlock", uselist=True, back_populates="attachment")
+    fallback = Column(String)
+    image_url = Column(String)
+    from_url = Column(String)
+    image_width = Column(Integer)
+    image_height = Column(Integer)
+    image_bytes = Column(Integer)
+    service_icon = Column(String)
+    service_name = Column(String)
+    attachment_id = Column(Integer)
+    original_url = Column(String)
+    bot_id = Column(String)
+    app_unfurl_url = Column(String)
+    is_app_unfurl = Column(Boolean)
+    service_url = Column(String)
+    video_html = Column(String)
+    video_html_width = Column(Integer)
+    video_html_height = Column(Integer)
+    actions = relationship("Action", uselist=True, back_populates="attachments")
+    callback_id = Column(String)
+    fields = relationship("Field", uselist=True, back_populates="attachments")
+    pretext = Column(String)
+    files = relationship("File",uselist=True, back_populates="attachments")
+    message_id = Column(Integer, ForeignKey("messages.id"))
+    message = relationship("Message", back_populates="attachments")
+
+class Field(Text):
+    __tablename__ = "fields"
+    __mapper_args__ = {'concrete':True}
+    id = Column(Integer, primary_key = True)
+    attachment_id = Column(Integer, ForeignKey("attachments.id"))
+    attachments = relationship("Attachment", back_populates="fields")
+    
+class Action(Base):
+    __tablename__ = "actions"
+    id = Column(Integer, primary_key=True)
+    action_id = Column(String)
+    name = Column(String)
+    text = relationship("Text", uselist = False, back_populates="action")
+    _type = Column(String)
+    value = Column(String)
+    url = Column(String)
+    # style = relationship("Style", uselist = False, back_populates="action")
+    style = Column(String)
+    attachment_id = Column(Integer, ForeignKey("attachments.id"))
+    attachments = relationship("Attachment", back_populates="actions")
