@@ -195,8 +195,7 @@ class Slack:
                 messages = self.client.conversations_replies(channel=channel,ts=thread_ts)["messages"]
                 replies = []
                 for message in messages:
-                    if("subtype" in message and message["subtype"] == "thread_broadcast"):
-                        print("hello")
+                    if("subtype" in message and message["subtype"] == "thread_broadcast" or "reply_count" in message and message["reply_count"] > 0):
                         message = {}
                         continue
                     message.pop("thread_ts")
