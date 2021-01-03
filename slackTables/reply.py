@@ -8,5 +8,5 @@ class Reply(Message):
     message_id = Column(Integer, ForeignKey("messages.id"))
     message = relationship("Message",back_populates="replies")
     __mapper_args__ = {
-        'polymorphic_identity':'replies',
+        'polymorphic_identity':'reply',
     } 

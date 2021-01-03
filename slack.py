@@ -115,15 +115,15 @@ class Slack:
                 print("0000000000")
                 print(name + "\n" + id)
                 print("0000000000")
-                result = self.client.conversations_history(channel=id,limit=20)
+                result = self.client.conversations_history(channel=id,limit=200)
                 cursor = result["response_metadata"]["next_cursor"] if result["response_metadata"] != None else ""
                 print(cursor)
                 slack_messages = result["messages"]
-                # while(len(cursor) > 0):
-                #     cursor = result["response_metadata"]["next_cursor"] if result["response_metadata"] != None else ""
-                #     print(cursor)
-                #     result = self.client.conversations_history(channel=id, limit = 200, cursor = cursor)
-                #     slack_messages += result["messages"]
+                while(len(cursor) > 0):
+                    cursor = result["response_metadata"]["next_cursor"] if result["response_metadata"] != None else ""
+                    print(cursor)
+                    result = self.client.conversations_history(channel=id, limit = 200, cursor = cursor)
+                    slack_messages += result["messages"]
                 #Uncomment to see channel information
                 # f= open(id+".json","w")
                 # json.dump(slack_messages, f)
@@ -138,6 +138,7 @@ class Slack:
                 Base.metadata.create_all(self.engine)
                 print(channel)
                 self.session.commit()
+                print(self.session.query(Reply).all())
                 self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=(name +" written"))
                 # channel_history_list.append(channel)
             # self.session.add_all(channel_history_list)
@@ -201,6 +202,7 @@ class Slack:
                     message.pop("thread_ts")
                     message = self.process_message(channel,message)
                     message["root_client_msg_id"] = client_msg_id
+                    message["type"] = "reply"
                     # message["reply"] = True
                     replies.append(Reply(**message))
                 return replies
@@ -227,7 +229,6 @@ class Slack:
     def process_message(self,id,message):
         # print(".", end="",flush=True)
         slack_message = message
-        slack_message["_type"] = slack_message.pop("type","") 
         slack_message["user_id"] = slack_message.pop("user","")
 
         if "blocks" in slack_message:
@@ -459,7 +460,7 @@ class Slack:
                 replied_messages = self.fetch_replies(id, thread_ts, message_id)
                 print("run")
                 # slack_messages += replied_messages
-                # slack_messages["replies"] = replied_messages
+                slack_message["replies"] = replied_messages
             print("1111111")
             print("")
             # else:

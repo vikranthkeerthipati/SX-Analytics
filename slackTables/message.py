@@ -15,7 +15,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(String)
     client_msg_id = Column(String)
-    _type = Column(String)
+    type = Column(String)
     subtype = Column(String)
     username = Column(String)
     text = Column(String)
@@ -58,8 +58,8 @@ class Message(Base):
     channel_history_id = Column(Integer, ForeignKey("channel_histories.id"))
     channel_history = relationship("ChannelHistory", back_populates="messages")
     __mapper_args__ = {
-        'polymorphic_identity':'messages'
-        # 'polymorphic_on':user_id
+        'polymorphic_identity':'message',
+        'polymorphic_on': type
     }
 
 
