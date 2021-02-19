@@ -35,7 +35,7 @@ class Slack:
     def fetch_channels(self):
         logger = Logger("channel")
         try:
-            channels = self.client.conversations_list(types="public_channel, private_channel")["channels"]
+            channels = self.client.conversations_list(types="public_channel")["channels"]
             list_of_channels = []
             for slack_channel in channels:
                 if "topic" in slack_channel:
