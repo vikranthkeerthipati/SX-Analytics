@@ -19,16 +19,14 @@ class Slack:
     def __init__(self, config):
         self.api_url = "https://slack.com/api"
         self.user_token = config['user_token']
-        self.bot_token = config['bot_token']
         self.secret_key = config["secret_key"]
         self.database_url = config["database_url"]
         self.client = WebClient(token=self.user_token)
-        self.bot_client = WebClient(token=self.bot_token)
         #Testing replies api   
         self.replies = 0
         #UNCOMMENT IF YOU WISH TO WRITE TO DB
-        self.engine = create_engine(self.database_url,echo=True)
-        # self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        # self.engine = create_engine(self.database_url,echo=True)
+        self.engine = create_engine("sqlite:///:memory:", echo=True,connect_args={"check_same_thread": False}, poolclass=StaticPool)
         Session = scoped_session(sessionmaker(bind=self.engine))
         self.session = Session()
         Base.metadata.bind = self.engine
@@ -86,15 +84,12 @@ class Slack:
             Base.metadata.create_all(self.engine)
             self.session.commit()
         except SlackApiError as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Slack API error: " + e))
             logger.error("Error fetching conversations: {}".format(e))
             raise
         except SQLAlchemyError as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Database write error: " + e))
             logger.error("Error writing database: {}".format(e))
             raise
         except Exception as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Unknown error: " + e))
             logger.error("Error writing database: {}".format(e))
             raise
 
@@ -139,27 +134,22 @@ class Slack:
                 print(channel)
                 self.session.commit()
                 print(self.session.query(Reply).all())
-                self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=(name +" written"))
                 # channel_history_list.append(channel)
             # self.session.add_all(channel_history_list)
             # Base.metadata.create_all(self.engine)
             # self.session.commit()
 
         except SlackApiError as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Slack API error: " + str(e)))
             logger.error("Error fetching conversations: {}".format(e))
             raise
         except SQLAlchemyError as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Database write error: " + str(e)))
             logger.error("Error writing database: {}".format(e))
             raise
         except Exception as e:
-            self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("Unknown error: " + str(e)))
             logger.error("Error writing database: {}".format(e))
             raise
         
         print("the goddamn thing worked")
-        self.bot_client.chat_postMessage(channel="U01BRCTASEL", text=("the goddamn thing worked"))
         print(Base.metadata.tables.keys())
     def fetch_users(self):
         logger = Logger("users")

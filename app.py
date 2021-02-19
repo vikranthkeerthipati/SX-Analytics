@@ -9,8 +9,7 @@ load_dotenv()
 slack = Slack({
     'user_token': os.environ.get("SLACK_USER_TOKEN"),
     'secret_key': os.environ.get("SLACK_SIGNING_SECRET"),
-    'database_url': os.environ.get("DATABASE_URL"),
-    'bot_token': os.environ.get("SLACK_BOT_TOKEN")
+    'database_url': os.environ.get("DATABASE_URL")
 })
 
 
