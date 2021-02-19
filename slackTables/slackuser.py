@@ -21,6 +21,7 @@ class SlackUser(Base):
     is_primary_owner = Column(Boolean)
     is_restricted = Column(Boolean)
     is_ultra_restricted = Column(Boolean)
+    is_email_confirmed = Column(Boolean)
     is_bot = Column(Boolean)
     is_app_user = Column(Boolean)
     updated = Column(String)
